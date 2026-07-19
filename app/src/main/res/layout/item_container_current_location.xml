@@ -33,6 +33,8 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/_4sdp"
         android:layout_marginEnd="@dimen/_4sdp"
+        android:ellipsize="end"
+        android:maxLines="1"
         android:textColor="@color/raisin_black"
         android:textSize="@dimen/_12ssp"
         app:layout_constraintBottom_toBottomOf="@id/imageLocation"
