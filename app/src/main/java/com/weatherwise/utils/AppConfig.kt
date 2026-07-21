@@ -1,6 +1,7 @@
 package com.weatherwise.utils
 
 import android.app.Application
+import com.weatherwise.dependency_injection.networkModule
 import com.weatherwise.dependency_injection.repositoryModule
 import com.weatherwise.dependency_injection.serializerModule
 import com.weatherwise.dependency_injection.storageModule
@@ -19,7 +20,8 @@ class AppConfig : Application() {
                     repositoryModule,
                     viewModelModule,
                     serializerModule,
-                    storageModule
+                    storageModule,
+                    networkModule
                 )
             )
         }
