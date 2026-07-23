@@ -8,9 +8,15 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResult
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.RecyclerView
+import com.weatherwise.data.RemoteLocation
 import com.weatherwise.databinding.FragmentLocationBinding
+import com.weatherwise.fragments.home.HomeFragment
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class LocationFragment : Fragment() {
@@ -19,6 +25,12 @@ class LocationFragment : Fragment() {
     private val binding get() = requireNotNull(_binding)
 
     private val locationViewModel: LocationViewModel by viewModel()
+
+    private val locationsAdapter = LocationsAdapter(
+        onLocationClicked = { remoteLocation ->
+            setLocation(remoteLocation)
+        }
+    )
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -32,7 +44,15 @@ class LocationFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setListeners()
+        setupLocationRecycleView()
         setObservers()
+    }
+
+    private fun setupLocationRecycleView() {
+        with(binding.locationsRecycleView) {
+            addItemDecoration(DividerItemDecoration(requireContext(), RecyclerView.VERTICAL))
+            adapter = locationsAdapter
+        }
     }
 
     private fun setListeners() {
@@ -48,6 +68,21 @@ class LocationFragment : Fragment() {
         }
     }
 
+    private fun setLocation(remoteLocation: RemoteLocation) {
+        with(remoteLocation) {
+            val locationText = "$name, $region, $country"
+            setFragmentResult(
+                requestKey = HomeFragment.REQUEST_KEY_MANUAL_LOCATION_SEARCH,
+                result = bundleOf(
+                    HomeFragment.KEY_LOCATION_TEXT to locationText,
+                    HomeFragment.LATITUDE to lat,
+                    HomeFragment.LONGITUDE to lon,
+                )
+            )
+            findNavController().popBackStack()
+        }
+    }
+
     private fun setObservers() {
         locationViewModel.searchResult.observe(viewLifecycleOwner) {
             val searchResultDataState = it ?: return@observe
@@ -58,11 +93,8 @@ class LocationFragment : Fragment() {
                 binding.progressBar.visibility = View.GONE
             }
             searchResultDataState.locations?.let { remoteLocations ->
-                Toast.makeText(
-                    requireContext(),
-                    "${remoteLocations.size} location(s) found",
-                    Toast.LENGTH_SHORT
-                ).show()
+                binding.locationsRecycleView.visibility = View.VISIBLE
+                locationsAdapter.setData(remoteLocations)
             }
             searchResultDataState.error?.let { error ->
                 Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
