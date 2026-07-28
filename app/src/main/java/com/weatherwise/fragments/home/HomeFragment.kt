@@ -71,9 +71,16 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setWeatherDataAdapter()
         setObservers()
+        setListeners()
         if (!isInitialLocationSet) {
             setCurrentLocation(currentLocation = sharedPreferencesManager.getCurrentLocation())
             isInitialLocationSet = true
+        }
+    }
+
+    private fun setListeners() {
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            setCurrentLocation(sharedPreferencesManager.getCurrentLocation())
         }
     }
 
@@ -98,11 +105,10 @@ class HomeFragment : Fragment() {
                 val weatherDataState = it.getContentIfNotHandled() ?: return@observe
                 binding.swipeRefreshLayout.isRefreshing = weatherDataState.isLoading
                 weatherDataState.currentWeather?.let { currentWeather ->
-                    Toast.makeText(
-                        requireContext(),
-                        currentWeather.temperature.toString(),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    weatherDataAdapter.setCurrentWeather(currentWeather)
+                }
+                weatherDataState.forecast?.let { forecasts ->
+                    weatherDataAdapter.setForecastData(forecasts)
                 }
                 weatherDataState.error?.let { error ->
                     Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
@@ -112,6 +118,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun setWeatherDataAdapter() {
+        binding.weatherDataRecycleView.itemAnimator = null
         binding.weatherDataRecycleView.adapter = weatherDataAdapter
     }
 
@@ -159,6 +166,7 @@ class HomeFragment : Fragment() {
     private fun showLoading() {
         with(binding) {
             weatherDataRecycleView.visibility = View.GONE
+            swipeRefreshLayout.isEnabled = false
             swipeRefreshLayout.isRefreshing = true
         }
     }
@@ -166,6 +174,7 @@ class HomeFragment : Fragment() {
     private fun hideLoading() {
         with(binding) {
             weatherDataRecycleView.visibility = View.VISIBLE
+            swipeRefreshLayout.isEnabled = true
             swipeRefreshLayout.isRefreshing = false
         }
     }

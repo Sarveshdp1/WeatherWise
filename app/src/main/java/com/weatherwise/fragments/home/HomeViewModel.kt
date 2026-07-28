@@ -8,9 +8,12 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.weatherwise.data.CurrentLocation
 import com.weatherwise.data.CurrentWeather
+import com.weatherwise.data.Forecast
 import com.weatherwise.data.LiveDataEvent
 import com.weatherwise.network.repository.WeatherDataRepository
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class HomeViewModel(private val weatherDataRepository: WeatherDataRepository) : ViewModel() {
 
@@ -83,7 +86,15 @@ class HomeViewModel(private val weatherDataRepository: WeatherDataRepository) : 
                         wind = weatherData.current.wind,
                         humidity = weatherData.current.humidity,
                         chanceOfRain = weatherData.forecast.forecastDay.first().day.changeOfRain
-                    )
+                    ),
+                    forecast = weatherData.forecast.forecastDay.first().hour.map {
+                        Forecast(
+                            time = getForecastTime(it.time),
+                            temperature = it.temperature,
+                            feelsLikeTemperature = it.feelsLikeTemperature,
+                            icon = it.condition.icon
+                        )
+                    }
                 )
             } ?: emitWeatherDataUiState(error = "Unable to fetch weather data")
         }
@@ -92,18 +103,24 @@ class HomeViewModel(private val weatherDataRepository: WeatherDataRepository) : 
     private fun emitWeatherDataUiState(
         isLoading: Boolean = false,
         currentWeather: CurrentWeather? = null,
+        forecast: List<Forecast>? =null,
         error: String? = null
     ) {
-        val weatherDataState = WeatherDataState(isLoading, currentWeather, error)
+        val weatherDataState = WeatherDataState(isLoading, currentWeather, forecast, error)
         _weatherData.value = LiveDataEvent(weatherDataState)
     }
 
     data class WeatherDataState(
         val isLoading: Boolean,
         val currentWeather: CurrentWeather?,
+        val forecast: List<Forecast>?,
         val error: String?
     )
+
+    private fun getForecastTime(dataTime: String) : String {
+        val pattern = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        val date = pattern.parse(dataTime) ?: return dataTime
+        return SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
+    }
     //endregion
-
-
 }
