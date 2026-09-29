@@ -16,8 +16,11 @@ import androidx.fragment.app.setFragmentResultListener
 import com.weatherwise.R
 import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.LocationServices
+import com.weatherwise.data.AlertsUiState
 import com.weatherwise.data.CurrentLocation
 import com.weatherwise.databinding.FragmentHomeBinding
+import com.weatherwise.fragments.common.colorRes
+import com.weatherwise.fragments.common.emoji
 import com.weatherwise.storage.SharedPreferencesManager
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -82,6 +85,14 @@ class HomeFragment : Fragment() {
         binding.swipeRefreshLayout.setOnRefreshListener {
             setCurrentLocation(sharedPreferencesManager.getCurrentLocation())
         }
+        // Open the Safety Center (SOS, contacts, guides, helplines)
+        binding.buttonSafety.setOnClickListener {
+            findNavController().navigate(R.id.action_home_fragment_to_safety_fragment)
+        }
+        // Tapping the alert bar opens the full list of alerts
+        binding.textAlertBanner.setOnClickListener {
+            findNavController().navigate(R.id.action_home_fragment_to_alerts_fragment)
+        }
     }
 
     private fun setObservers() {
@@ -100,6 +111,9 @@ class HomeFragment : Fragment() {
                     hideLoading()
                     Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
                 }
+            }
+            alertsState.observe(viewLifecycleOwner) { state ->
+                showAlertsBar(state)
             }
             weatherData.observe(viewLifecycleOwner) {
                 val weatherDataState = it.getContentIfNotHandled() ?: return@observe
@@ -124,6 +138,9 @@ class HomeFragment : Fragment() {
 
     private fun setCurrentLocation(currentLocation: CurrentLocation? = null) {
         weatherDataAdapter.setCurrentLocation(currentLocation ?: CurrentLocation())
+        if (currentLocation == null) {
+            setAlertsBarText("Choose a location to see safety alerts", R.color.sonic_silver)
+        }
         currentLocation?.let { getWeatherData(currentLocation = it) }
     }
 
@@ -200,9 +217,38 @@ class HomeFragment : Fragment() {
         clearFragmentResultListener(REQUEST_KEY_MANUAL_LOCATION_SEARCH)
     }
 
+    // Updates the alert bar at the top: green = all clear, orange/red = something to know.
+    private fun showAlertsBar(state: AlertsUiState) {
+        val alerts = state.alerts ?: emptyList()
+        if (state.isLoading) {
+            setAlertsBarText("Checking safety alerts...", R.color.sonic_silver)
+        } else if (state.error != null) {
+            setAlertsBarText("Couldn't check safety alerts (are you online?)", R.color.sonic_silver)
+        } else if (alerts.isEmpty()) {
+            setAlertsBarText("\u2705 All clear - no active alerts for your area", R.color.alert_safe)
+        } else {
+            // The list is sorted, so the first alert is the most serious one.
+            val top = alerts.first()
+            val count = if (alerts.size == 1) "1 alert" else "${alerts.size} alerts"
+            setAlertsBarText(
+                "${top.severity.emoji()} $count: ${top.title}. Tap to view.",
+                top.severity.colorRes()
+            )
+        }
+    }
+
+    private fun setAlertsBarText(text: String, colorRes: Int) {
+        binding.textAlertBanner.text = text
+        binding.textAlertBanner.setTextColor(ContextCompat.getColor(requireContext(), colorRes))
+    }
+
     private fun getWeatherData(currentLocation: CurrentLocation) {
         if (currentLocation.latitude != null && currentLocation.longitude != null) {
             homeViewModel.getWeatherData(
+                latitude = currentLocation.latitude,
+                longitude = currentLocation.longitude
+            )
+            homeViewModel.getAlerts(
                 latitude = currentLocation.latitude,
                 longitude = currentLocation.longitude
             )

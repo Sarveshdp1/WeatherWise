@@ -15,6 +15,14 @@
             android:id="@+id/action_home_fragment_to_location_fragment"
             app:destination="@id/locationFragment" />
 
+        <action
+            android:id="@+id/action_home_fragment_to_safety_fragment"
+            app:destination="@id/safetyFragment" />
+
+        <action
+            android:id="@+id/action_home_fragment_to_alerts_fragment"
+            app:destination="@id/alertsFragment" />
+
     </fragment>
 
     <fragment
@@ -22,5 +30,54 @@
         android:name="com.weatherwise.fragments.location.LocationFragment"
         android:label="Location"
         tools:layout="@layout/fragment_location" />
+
+    <!-- Safety Center: the hub with the SOS button and links to the 4 safety screens -->
+    <fragment
+        android:id="@+id/safetyFragment"
+        android:name="com.weatherwise.fragments.safety.SafetyFragment"
+        android:label="Safety Center"
+        tools:layout="@layout/fragment_safety">
+
+        <action
+            android:id="@+id/action_safety_fragment_to_alerts_fragment"
+            app:destination="@id/alertsFragment" />
+
+        <action
+            android:id="@+id/action_safety_fragment_to_contacts_fragment"
+            app:destination="@id/contactsFragment" />
+
+        <action
+            android:id="@+id/action_safety_fragment_to_guides_fragment"
+            app:destination="@id/guidesFragment" />
+
+        <action
+            android:id="@+id/action_safety_fragment_to_helplines_fragment"
+            app:destination="@id/helplinesFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/alertsFragment"
+        android:name="com.weatherwise.fragments.alerts.AlertsFragment"
+        android:label="Alerts"
+        tools:layout="@layout/fragment_simple_list" />
+
+    <fragment
+        android:id="@+id/contactsFragment"
+        android:name="com.weatherwise.fragments.contacts.ContactsFragment"
+        android:label="Emergency Contacts"
+        tools:layout="@layout/fragment_simple_list" />
+
+    <fragment
+        android:id="@+id/guidesFragment"
+        android:name="com.weatherwise.fragments.guides.GuidesFragment"
+        android:label="Safety Guides"
+        tools:layout="@layout/fragment_simple_list" />
+
+    <fragment
+        android:id="@+id/helplinesFragment"
+        android:name="com.weatherwise.fragments.helplines.HelplinesFragment"
+        android:label="Helplines"
+        tools:layout="@layout/fragment_simple_list" />
 
 </navigation>

@@ -6,16 +6,22 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.weatherwise.data.AlertsUiState
 import com.weatherwise.data.CurrentLocation
 import com.weatherwise.data.CurrentWeather
 import com.weatherwise.data.Forecast
 import com.weatherwise.data.LiveDataEvent
+import com.weatherwise.network.repository.SafetyRepository
 import com.weatherwise.network.repository.WeatherDataRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class HomeViewModel(private val weatherDataRepository: WeatherDataRepository) : ViewModel() {
+class HomeViewModel(
+    private val weatherDataRepository: WeatherDataRepository,
+    private val safetyRepository: SafetyRepository
+) : ViewModel() {
 
     //region Current Location
     private val _currentLocation = MutableLiveData<LiveDataEvent<CurrentLocationDataState>>()
@@ -121,6 +127,29 @@ class HomeViewModel(private val weatherDataRepository: WeatherDataRepository) : 
         val pattern = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
         val date = pattern.parse(dataTime) ?: return dataTime
         return SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
+    }
+    //endregion
+
+    //region Safety Alerts (shown in the bar at the top of the Home screen)
+    // A normal LiveData (not an "event"), so the bar shows the latest state again
+    // when the user comes back to the Home screen.
+    private val _alertsState = MutableLiveData<AlertsUiState>()
+    val alertsState: LiveData<AlertsUiState> get() = _alertsState
+
+    private var alertsJob: Job? = null
+
+    fun getAlerts(latitude: Double, longitude: Double) {
+        // If the user changes location quickly, ignore the older request.
+        alertsJob?.cancel()
+        alertsJob = viewModelScope.launch {
+            _alertsState.value = AlertsUiState(isLoading = true)
+            val alerts = safetyRepository.getAlerts(latitude, longitude, forceRefresh = true)
+            _alertsState.value = if (alerts == null) {
+                AlertsUiState(error = "Couldn't check safety alerts")
+            } else {
+                AlertsUiState(alerts = alerts)
+            }
+        }
     }
     //endregion
 }

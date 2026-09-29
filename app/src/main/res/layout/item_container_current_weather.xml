@@ -174,7 +174,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="@string/chance_of_rain"
+                    android:text="@string/rain_chances"
                     android:textColor="@color/sonic_silver"
                     android:textSize="@dimen/_10ssp" />
 

@@ -10,5 +10,5 @@
     android:textColor="@color/raisin_black"
     android:textSize="@dimen/_12sdp"
     tools:text="Kerhale BK"
-    android:background="@drawable/close_icon_backgraund"/>
+    android:background="@drawable/close_icon_background"/>
 

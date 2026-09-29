@@ -9,6 +9,7 @@ import com.weatherwise.data.CurrentLocation
 import com.weatherwise.data.RemoteLocation
 import com.weatherwise.data.RemoteWeatherData
 import com.weatherwise.network.api.WeatherAPI
+import kotlin.coroutines.cancellation.CancellationException
 
 class WeatherDataRepository(private val weatherAPI: WeatherAPI) {
 
@@ -22,13 +23,18 @@ class WeatherDataRepository(private val weatherAPI: WeatherAPI) {
             Priority.PRIORITY_HIGH_ACCURACY,
             CancellationTokenSource().token
         ).addOnSuccessListener { location ->
-            location ?: onFailure()
-            onSuccess(
-                CurrentLocation(
-                    latitude = location.latitude,
-                    longitude = location.longitude
+            // The phone can return "no location" (for example GPS is off).
+            // Before, this crashed the app. Now we report a failure instead.
+            if (location == null) {
+                onFailure()
+            } else {
+                onSuccess(
+                    CurrentLocation(
+                        latitude = location.latitude,
+                        longitude = location.longitude
+                    )
                 )
-            )
+            }
         }.addOnFailureListener { onFailure() }
     }
 
@@ -51,13 +57,27 @@ class WeatherDataRepository(private val weatherAPI: WeatherAPI) {
         } ?: currentLocation
     }
 
+    // If there is no internet, Retrofit throws an exception. We catch it and return null,
+    // so the screen can show a friendly error message instead of crashing.
     suspend fun searchLocation(query: String): List<RemoteLocation>? {
-        val response = weatherAPI.searchLocation(query = query)
-        return if (response.isSuccessful) response.body() else null
+        return try {
+            val response = weatherAPI.searchLocation(query = query)
+            if (response.isSuccessful) response.body() else null
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        }
     }
 
     suspend fun getWeatherData(latitude: Double, longitude: Double) : RemoteWeatherData? {
-        val response = weatherAPI.getWeatherData(query = "$latitude,$longitude")
-        return if (response.isSuccessful) response.body() else null
+        return try {
+            val response = weatherAPI.getWeatherData(query = "$latitude,$longitude")
+            if (response.isSuccessful) response.body() else null
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        }
     }
 }

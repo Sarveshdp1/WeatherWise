@@ -4,6 +4,13 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Needed to send the SOS message directly to emergency contacts -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+
+    <!-- The app still works on devices without a SIM/telephony (e.g. tablets) -->
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
 
     <application
         android:name=".utils.AppConfig"

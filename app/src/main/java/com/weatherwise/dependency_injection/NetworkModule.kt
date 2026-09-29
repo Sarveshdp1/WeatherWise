@@ -1,5 +1,6 @@
 package com.weatherwise.dependency_injection
 
+import com.weatherwise.network.api.EarthquakeAPI
 import com.weatherwise.network.api.WeatherAPI
 import okhttp3.OkHttpClient
 import org.koin.dsl.module
@@ -11,6 +12,7 @@ val networkModule = module {
     factory { okHttpClient() }
     single { retrofit(okHttpClient = get()) }
     factory { weatherAPI(retrofit = get()) }
+    factory { earthquakeAPI(retrofit = get()) }
 }
 
 private fun okHttpClient() = OkHttpClient.Builder()
@@ -27,3 +29,5 @@ private fun retrofit(okHttpClient: OkHttpClient) = Retrofit.Builder()
     .build()
 
 private fun weatherAPI(retrofit: Retrofit) = retrofit.create(WeatherAPI::class.java)
+
+private fun earthquakeAPI(retrofit: Retrofit) = retrofit.create(EarthquakeAPI::class.java)
