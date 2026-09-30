@@ -10,6 +10,15 @@ android {
         }
     }
 
+    // Tell Gradle/Android Studio exactly where the Kotlin code lives.
+    // Without this, Android Studio sometimes shows a leftover "java" group
+    // in the project tree out of old habit, even though no java/ folder exists.
+    sourceSets {
+        getByName("main") {
+            kotlin.srcDirs("src/main/kotlin")
+        }
+    }
+
     defaultConfig {
         applicationId = "com.weatherwise"
         minSdk = 24
